@@ -1,0 +1,6 @@
+@Feed.PL_HostAddress = http://localhost:5216
+
+GET {{Feed.PL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
