@@ -18,7 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Common\" />
     <Folder Include="Exceptions\" />
+    <Folder Include="Data\" />
+    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>
