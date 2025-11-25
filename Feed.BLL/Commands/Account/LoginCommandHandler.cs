@@ -21,15 +21,14 @@ public class LoginHandler : ICommandHandler<LoginCommand, string>
     public async ValueTask<string> Handle(LoginCommand command, CancellationToken ct)
     {
         var user = await _userManager.FindByNameAsync(command.Request.UsernameOrEmail)
-                   ?? await _userManager.FindByEmailAsync(command.Request.UsernameOrEmail);
+             ?? await _userManager.FindByEmailAsync(command.Request.UsernameOrEmail);
 
-        if (user == null || !user.IsActive)
-            throw new ApplicationException("Invalid username/email or inactive user");
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, command.Request.Password, false);
 
-        if (!result.Succeeded)
-            throw new ApplicationException("Invalid password");
+        if (user == null || !user.IsActive || !(await _signInManager.CheckPasswordSignInAsync(user, command.Request.Password, false)).Succeeded)
+        {
+            throw new ApplicationException("Invalid credentials");
+        }
 
         // Return JWT
         return _tokenService.GenerateToken(user);

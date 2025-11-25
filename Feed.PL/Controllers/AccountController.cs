@@ -1,6 +1,7 @@
 ﻿
 using Feed.Application.Commands.Account;
 using Feed.Application.Requests.Account;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Feed.PL.Controllers;
 
@@ -25,9 +26,23 @@ public class AccountController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var token = await _mediator.Send(new LoginCommand() { Request = request });
-        return Ok(new { Token = token });
+        try
+        {
+            var token = await _mediator.Send(new LoginCommand() { Request = request });
+            return Ok(new { Token = token });
+        }
+        catch (ApplicationException) 
+        {
+            // Return generic message
+            return BadRequest(new { Message = "Invalid credentials" });
+        }
+        catch
+        {
+            // Unexpected errors
+            return StatusCode(500, new { Message = "An error occurred while processing your request." });
+        }
     }
+    
 
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
