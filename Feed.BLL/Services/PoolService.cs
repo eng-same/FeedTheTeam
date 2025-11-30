@@ -38,14 +38,14 @@ public class PoolService : IPoolService
             Description = dto.Description,
             CreatedAt = DateTime.UtcNow,
             ClosesAt = dto.ClosesAt,
-            Status = dto.Status ?? 1,
+            Status = dto.Status ?? 0,
             CreatedById = currentUserId
         };
 
-        // save pool first to generate Id
+        
         await _poolRepo.AddPoolAsync(pool);
 
-        // add options
+        
         foreach (var opt in dto.Options)
         {
             var option = new PoolOption
@@ -64,56 +64,53 @@ public class PoolService : IPoolService
 
     public async Task UpdatePoolAsync(UpdatePoolRequest dto, string currentUserId)
     {
+        // 1. Get pool with tracking
         var pool = await _poolRepo.GetPoolByIdAsync(dto.Id);
         if (pool == null) throw new KeyNotFoundException("Pool not found");
         if (pool.CreatedById != currentUserId) throw new UnauthorizedAccessException("Not owner");
 
-        // Update pool simple fields
+        // 2. Update simple fields
         pool.Title = dto.Title;
         pool.Description = dto.Description;
         pool.ClosesAt = dto.ClosesAt;
         pool.Status = dto.Status;
 
-        await _poolRepo.UpdatePoolAsync(pool);
+        // 3. Prepare lookup for existing options
+        var existing = pool.Options.ToDictionary(o => o.Id);
+        var receivedIds = new HashSet<int>();
 
-        // Manage options: add/update/delete
-        var existingOptionIds = pool.Options.Select(o => o.Id).ToList();
-        var incomingOptionIds = dto.Options.Where(o => o.Id > 0).Select(o => o.Id).ToList();
-
-        // Delete options that are in DB but not in request
-        var toDelete = existingOptionIds.Except(incomingOptionIds).ToList();
-        foreach (var id in toDelete)
-        {
-            await _optionsRepo.DeletePoolOptionAsync(id);
-        }
-
-        // Update existing and add new
         foreach (var opt in dto.Options)
         {
-            if (opt.Id == 0)
+            if (opt.Id.HasValue)
             {
-                var newOpt = new PoolOption
+                int idExisting = opt.Id.Value;
+                receivedIds.Add(idExisting);
+
+                // UPDATE
+                if (existing.TryGetValue(idExisting, out var entity))
+                {
+                    entity.Name = opt.Name;
+                    entity.OptionText = opt.OptionText;
+                }
+            }
+            else
+            {
+                // INSERT NEW
+                pool.Options.Add(new PoolOption
                 {
                     Name = opt.Name,
                     OptionText = opt.OptionText,
                     CreatedAt = DateTime.UtcNow,
                     PoolId = pool.Id
-                };
-                await _optionsRepo.AddPoolOptionAsync(newOpt);
-            }
-            else
-            {
-                // update
-                var u = new PoolOption
-                {
-                    Id = opt.Id,
-                    Name = opt.Name,
-                    OptionText = opt.OptionText,
-                    PoolId = pool.Id
-                };
-                await _optionsRepo.UpdatePoolOptionAsync(u);
+                });
             }
         }
+
+        // 4. DELETE missing options
+        pool.Options.RemoveAll(o => !receivedIds.Contains(o.Id));
+
+        // 5. Save
+        await _poolRepo.UpdatePoolAsync(pool);
     }
 
     public async Task OpenPoolAsync(int poolId, string currentUserId)
@@ -122,7 +119,7 @@ public class PoolService : IPoolService
         if (pool == null) throw new KeyNotFoundException("Pool not found");
         if (pool.CreatedById != currentUserId) throw new UnauthorizedAccessException();
 
-        pool.Status = 1; // open
+        pool.Status = 0; // open
         await _poolRepo.UpdatePoolAsync(pool);
     }
 
@@ -132,14 +129,14 @@ public class PoolService : IPoolService
         if (pool == null) throw new KeyNotFoundException("Pool not found");
         if (pool.CreatedById != currentUserId) throw new UnauthorizedAccessException();
 
-        pool.Status = 2; // closed
+        pool.Status = 1; // closed
         await _poolRepo.UpdatePoolAsync(pool);
     }
 
     public async Task DeletePoolAsync(int poolId, string currentUserId)
     {
         var pool = await _poolRepo.GetPoolByIdAsync(poolId);
-        if (pool == null) return;
+        if (pool == null) throw new KeyNotFoundException("Pool not found") ;
         if (pool.CreatedById != currentUserId) throw new UnauthorizedAccessException();
 
         await _poolRepo.DeletePoolAsync(poolId);

@@ -9,5 +9,5 @@ public class UpdatePoolRequest
     public string Description { get; set; } = string.Empty;
     public DateTime? ClosesAt { get; set; }
     public int Status { get; set; }
-    public List<UpdatePoolOptionRequest> Options { get; set; } = new();
+    public List<UpdatePoolOptionDto> Options { get; set; } = new();
 }

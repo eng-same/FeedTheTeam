@@ -23,7 +23,7 @@ public class Pool
     //Navigation Properties
     public User CreatedBy { get; set; } = null!;
 
-    public ICollection<PoolOption> Options { get; set; } = new List<PoolOption>();
+    public List<PoolOption> Options { get; set; } = new List<PoolOption>();
 
     public ICollection<Vote> Votes { get; set; } = new List<Vote>();
 

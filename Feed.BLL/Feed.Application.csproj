@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Vote\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.0" />
     <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
   </ItemGroup>
