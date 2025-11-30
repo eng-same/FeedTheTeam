@@ -60,9 +60,11 @@ public class PoolOptionService : IPoolOptionService
         return opt.Id;
     }
 
-    public async Task UpdateOptionAsync(UpdatePoolOptionRequest dto, string currentUserId)
+    public async Task UpdateOptionAsync(UpdatePoolOptionDto dto, string currentUserId)
     {
-        var existing = await _optionsRepo.GetPoolOptionByIdAsync(dto.Id);
+        
+        if(dto.Id == null) throw new ArgumentException("Option ID is required");
+        var existing = await _optionsRepo.GetPoolOptionByIdAsync(dto.Id.Value);
         if (existing == null) throw new KeyNotFoundException("Option not found");
 
         var pool = await _poolRepo.GetPoolByIdAsync(existing.PoolId);

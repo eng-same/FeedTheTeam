@@ -8,6 +8,6 @@ public interface IPoolOptionService
     Task<PoolOptionDto?> GetOptionByIdAsync(int optionId);
 
     Task<int> AddOptionAsync(CreatePoolOptionRequest dto, int poolId, string currentUserId);
-    Task UpdateOptionAsync(UpdatePoolOptionRequest dto, string currentUserId);
+    Task UpdateOptionAsync(UpdatePoolOptionDto dto, string currentUserId);
     Task DeleteOptionAsync(int optionId, string currentUserId);
 }

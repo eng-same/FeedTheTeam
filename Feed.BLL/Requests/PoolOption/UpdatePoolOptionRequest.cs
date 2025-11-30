@@ -1,9 +1,11 @@
 ﻿namespace Feed.Application.Requests.PoolOption;
 
-public class UpdatePoolOptionRequest
+public class UpdatePoolOptionDto
 {
 
-    public int Id { get; set; } // 0 => new
-    public string Name { get; set; } = string.Empty;
-    public string OptionText { get; set; } = string.Empty;
+    public int? Id { get; set; }     // null  = new option
+   
+    public string Name { get; set; }
+   
+    public string OptionText { get; set; }
 }

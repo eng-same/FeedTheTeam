@@ -64,6 +64,23 @@ public class PoolRepository :IPoolRepository
         if (filter.IncludeVotes)
             query = query.Include(p => p.Votes);
 
+        // **Lazy update for closed pools**
+        var now = DateTime.UtcNow;
+        var poolsToClose = await query
+            .Where(p => p.ClosesAt.HasValue && p.ClosesAt <= now && p.Status != 1)
+            .ToListAsync();
+
+        if (poolsToClose.Any())
+        {
+            foreach (var pool in poolsToClose)
+            {
+                pool.Status = 1; // Mark as closed
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+
         // Total count (before paging)
         var totalCount = await query.LongCountAsync();
 
@@ -93,7 +110,6 @@ public class PoolRepository :IPoolRepository
     public async Task<Pool?> GetPoolByIdAsync(int poolId)
     {
         return await _context.Pools
-            .AsNoTracking()
             .Include(p => p.Options) 
             .Include(p => p.Votes)
             .FirstOrDefaultAsync(p => p.Id == poolId && !p.IsDeleted);
