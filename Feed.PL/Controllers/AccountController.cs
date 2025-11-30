@@ -19,8 +19,17 @@ public class AccountController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var token = await _mediator.Send(new RegisterCommand() { Request =request});
-        return Ok(new { Token = token });
+        try
+        {
+            var token = await _mediator.Send(new RegisterCommand() { Request = request });
+
+            return Ok(new { Token = token });
+        }
+
+        catch (Exception)
+        {
+            return StatusCode(500, new { Message = "An error occurred while processing your request." });
+        }    
     }
 
     [HttpPost("login")]
