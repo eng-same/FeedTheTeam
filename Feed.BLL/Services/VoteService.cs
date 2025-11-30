@@ -1,6 +1,8 @@
 ﻿
 
+using Feed.Application.DTOs.Vote;
 using Feed.Application.Interfaces;
+using Feed.Application.Mappers.Votes;
 using Feed.Domain.Interfaces;
 
 namespace Feed.Application.Services;
@@ -18,10 +20,10 @@ public class VoteService :IVoteService
         _optionsRepo = optionsRepo;
     }
 
-    public async Task<IEnumerable<Vote>> GetVotesByPoolAsync(int poolId)
+    public async Task<VoteSummaryDto> GetVotesByPoolAsync(int poolId)
     {
-        var all = await _votesRepo.GetAllVotesAsync();
-        return all.Where(v => v.PoolId == poolId).ToList();
+        var votes = await _votesRepo.GetAllVotesAsync(poolId);
+        return votes.ToSummaryDto();
     }
 
     public async Task<Vote?> GetVoteByIdAsync(int voteId)
@@ -32,19 +34,23 @@ public class VoteService :IVoteService
     public async Task<Vote> AddVoteAsync(int poolId, int poolOptionId, string userId)
     {
         var pool = await _poolRepo.GetPoolByIdAsync(poolId);
-        if (pool == null) throw new KeyNotFoundException("Pool not found");
+        if (pool == null)
+            throw new KeyNotFoundException("Pool not found");
 
-        // Example rule: cannot vote if pool is closed (status 2)
-        if (pool.Status == 2) throw new InvalidOperationException("Pool is closed");
+        if (pool.Status == 1 ||pool.Status == 2)
+            throw new InvalidOperationException("Pool is closed");
 
         var option = await _optionsRepo.GetPoolOptionByIdAsync(poolOptionId);
-        if (option == null || option.PoolId != poolId) throw new KeyNotFoundException("Option not found");
 
-        // Simple check: use current repositories (could be optimized)
-        var allVotes = await _votesRepo.GetAllVotesAsync();
-        if (allVotes.Any(v => v.PoolId == poolId && v.UserId == userId))
+        if (option == null || option.PoolId != poolId)
+            throw new KeyNotFoundException("Option not found");
+
+        var alreadyVoted = await _votesRepo.HasUserVotedAsync(poolId, userId);
+
+        if (alreadyVoted)
             throw new InvalidOperationException("User already voted in this pool");
 
+        //create dto later
         var vote = new Vote
         {
             PoolId = poolId,
@@ -62,14 +68,14 @@ public class VoteService :IVoteService
         var vote = await _votesRepo.GetVoteByIdAsync(voteId);
         if (vote == null) return;
 
-        if (vote.UserId != currentUserId) throw new UnauthorizedAccessException();
+        if (vote.UserId != currentUserId)
+            throw new UnauthorizedAccessException();
 
         await _votesRepo.DeleteVoteAsync(voteId);
     }
 
     public async Task<bool> HasUserVotedAsync(int poolId, string userId)
     {
-        var all = await _votesRepo.GetAllVotesAsync();
-        return all.Any(v => v.PoolId == poolId && v.UserId == userId);
+        return await _votesRepo.HasUserVotedAsync(poolId, userId);
     }
 }
