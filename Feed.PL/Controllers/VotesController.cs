@@ -62,9 +62,13 @@ namespace Feed.PL.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> Summary([FromQuery] int poolId)
         {
-            var result = _mediator.Send(new GetVotesByPoolQuery() { PoolId = poolId });
-            if (result == null) return NotFound();
-            return Ok(result);
+
+            var dto = await _mediator.Send(new GetVotesByPoolQuery { PoolId = poolId });
+
+            if (dto == null) return NotFound();
+
+            
+            return Ok(new { result = dto });
             //we need to check if the pool exeist if yes show total of no show not found 
         }
     }

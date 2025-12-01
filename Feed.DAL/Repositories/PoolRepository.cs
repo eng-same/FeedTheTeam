@@ -74,6 +74,8 @@ public class PoolRepository :IPoolRepository
         {
             foreach (var pool in poolsToClose)
             {
+                //await _context.Set<Pool>()
+                //    .ExecuteUpdateAsync(setter => setter.SetProperty(x => x.Status, 1));
                 pool.Status = 1; // Mark as closed
             }
 
@@ -125,7 +127,15 @@ public class PoolRepository :IPoolRepository
     {
         _context.Pools.Update(pool);
         await _context.SaveChangesAsync();
-    }
+    } 
+    //public async Task MarkAsClosed(int id, CancellationToken cancellationToken)
+    //{
+    //    await _context.Set<Pool>()
+    //        .Where(x => x.Id == id)
+    //        .ExecuteUpdateAsync(setter => setter
+    //        .SetProperty(x => x.Status, 1),
+    //        cancellationToken);
+    //}
 
     public async Task DeletePoolAsync(int poolId)
     {

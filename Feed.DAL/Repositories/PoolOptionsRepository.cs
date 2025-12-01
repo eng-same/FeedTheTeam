@@ -1,6 +1,7 @@
 ﻿
 using Feed.Domain.Data;
 using Feed.Domain.Interfaces;
+using Feed.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Feed.Domain.Repositories;
@@ -50,5 +51,12 @@ public class PoolOptionsRepository :IPoolOptionsRepository
             await _context.SaveChangesAsync();
         }
 
+    }
+
+    public async Task<IEnumerable<PoolOption>> GetAllPoolOptionsAsync(int poolId)
+    {
+        return await _context.PoolOptions
+       .Where(option => option.PoolId == poolId)
+       .ToListAsync();
     }
 }
