@@ -4,6 +4,7 @@ using Feed.Application.DTOs.Vote;
 using Feed.Application.Interfaces;
 using Feed.Application.Mappers.Votes;
 using Feed.Domain.Interfaces;
+using Feed.Domain.Models;
 
 namespace Feed.Application.Services;
 
@@ -20,10 +21,44 @@ public class VoteService :IVoteService
         _optionsRepo = optionsRepo;
     }
 
-    public async Task<VoteSummaryDto> GetVotesByPoolAsync(int poolId)
+    public async Task<VoteSummaryDto?> GetVotesByPoolAsync(int poolId)
     {
-        var votes = await _votesRepo.GetAllVotesAsync(poolId);
-        return votes.ToSummaryDto();
+        var pool = await _poolRepo.GetPoolByIdAsync(poolId);
+        if (pool == null) return null;
+
+        var options = await _optionsRepo.GetAllPoolOptionsAsync(poolId);
+        var votes = (await _votesRepo.GetAllVotesAsync(poolId)).ToList();
+
+        var countsByOption = votes
+            .GroupBy(v => v.PoolOptionId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var optionSummaries = options
+            .Select(opt => new VoteOptionSummaryDto
+            {
+                OptionId = opt.Id,
+                OptionText = opt.OptionText,
+                VotesCount = countsByOption.TryGetValue(opt.Id, out var c) ? c : 0
+            })
+            .ToList();
+
+        var totalVotes = optionSummaries.Sum(o => o.VotesCount);
+
+        int? winningOptionId = null;
+        if (totalVotes > 0)
+        {
+            var ordered = optionSummaries.OrderByDescending(o => o.VotesCount).ToList();
+            var topVotes = ordered.First().VotesCount;
+            var topCount = ordered.Count(o => o.VotesCount == topVotes);
+            winningOptionId = topCount == 1 ? ordered.First().OptionId : null;
+        }
+
+        return new VoteSummaryDto
+        {
+            TotalVotes = totalVotes,
+            WinningOptionId = winningOptionId,
+            Options = optionSummaries
+        };
     }
 
     public async Task<Vote?> GetVoteByIdAsync(int voteId)

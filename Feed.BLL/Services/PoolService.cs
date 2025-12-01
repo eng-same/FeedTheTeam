@@ -81,7 +81,7 @@ public class PoolService : IPoolService
 
         foreach (var opt in dto.Options)
         {
-            if (opt.Id.HasValue)
+            if (opt.Id.HasValue && opt.Id.Value != -1) // <- UPDATED LOGIC
             {
                 int idExisting = opt.Id.Value;
                 receivedIds.Add(idExisting);
