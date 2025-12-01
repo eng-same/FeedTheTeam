@@ -3,12 +3,12 @@ using Feed.Application.Interfaces;
 using Feed.Application.Services;
 using Feed.Domain.Data;
 using Feed.Domain.Models;
-using Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +26,16 @@ builder.Services.AddCors(options =>
                         .AllowAnyMethod());
 });
 
+Env.Load();
+// Load environment variables (from Docker .env)
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ;
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ;
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+// Build connection string
+var connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};Pooling=true;";
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -62,7 +72,9 @@ builder.Services.AddBLL();
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
+
+
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()

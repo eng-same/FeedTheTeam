@@ -1,11 +1,12 @@
-﻿using Feed.Application.Interfaces;
+﻿using Feed.Application.DTOs.Account;
+using Feed.Application.Interfaces;
 using Feed.Application.Requests.Account;
 using Mediator;
 using Microsoft.AspNetCore.Identity;
 
 namespace Feed.Application.Commands.Account;
 
-public class LoginHandler : ICommandHandler<LoginCommand, string>
+public class LoginHandler : ICommandHandler<LoginCommand, UserDto>
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
@@ -18,24 +19,30 @@ public class LoginHandler : ICommandHandler<LoginCommand, string>
         _tokenService = tokenService;
     }
 
-    public async ValueTask<string> Handle(LoginCommand command, CancellationToken ct)
+    public async ValueTask<UserDto> Handle(LoginCommand command, CancellationToken ct)
     {
         var user = await _userManager.FindByNameAsync(command.Request.UsernameOrEmail)
              ?? await _userManager.FindByEmailAsync(command.Request.UsernameOrEmail);
 
-
-
-        if (user == null || !user.IsActive || !(await _signInManager.CheckPasswordSignInAsync(user, command.Request.Password, false)).Succeeded)
+        if (user == null || !user.IsActive ||
+            !(await _signInManager.CheckPasswordSignInAsync(user, command.Request.Password, false))
+                .Succeeded)
         {
             throw new ApplicationException("Invalid credentials");
         }
 
-        // Return JWT
-        return _tokenService.GenerateToken(user);
+        var token = _tokenService.GenerateToken(user);
+
+        return new UserDto
+        {
+            Token = token,
+            UserName = user.UserName,
+            Id = user.Id
+        };
     }
 }
 
-public class LoginCommand: ICommand<string>
+public class LoginCommand: ICommand<UserDto>
 {
    public LoginRequest Request { get; set; }
 }

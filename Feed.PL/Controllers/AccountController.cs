@@ -2,6 +2,7 @@
 using Feed.Application.Commands.Account;
 using Feed.Application.Requests.Account;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Security.Claims;
 
 namespace Feed.PL.Controllers;
 
@@ -16,42 +17,39 @@ public class AccountController : ControllerBase
         _mediator = mediator;
     }
 
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         try
         {
-            var token = await _mediator.Send(new RegisterCommand() { Request = request });
+            var userDto = await _mediator.Send(new RegisterCommand { Request = request });
 
-            return Ok(new { Token = token });
+            return Ok(userDto);
         }
-
         catch (Exception)
         {
             return StatusCode(500, new { Message = "An error occurred while processing your request." });
-        }    
+        }
     }
-
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         try
         {
-            var token = await _mediator.Send(new LoginCommand() { Request = request });
-            return Ok(new { Token = token });
+            var userDto = await _mediator.Send(new LoginCommand { Request = request });
+
+            return Ok(userDto);
         }
-        catch (ApplicationException) 
+        catch (ApplicationException)
         {
-            // Return generic message
             return BadRequest(new { Message = "Invalid credentials" });
         }
         catch
         {
-            // Unexpected errors
             return StatusCode(500, new { Message = "An error occurred while processing your request." });
         }
     }
-    
 
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()

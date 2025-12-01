@@ -1,5 +1,6 @@
 ﻿
 
+using Feed.Application.DTOs.Account;
 using Feed.Application.Interfaces;
 using Feed.Application.Requests.Account;
 using Mediator;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Feed.Application.Commands.Account;
 
-public class RegisterHandler : ICommandHandler<RegisterCommand, string>
+public class RegisterHandler : ICommandHandler<RegisterCommand, UserDto>
 {
     private readonly UserManager<User> _userManager;
     private readonly ITokenService _tokenService;
@@ -19,7 +20,7 @@ public class RegisterHandler : ICommandHandler<RegisterCommand, string>
         _tokenService = tokenService;
     }
 
-    public async ValueTask<string> Handle(RegisterCommand command, CancellationToken ct)
+    public async ValueTask<UserDto> Handle(RegisterCommand command, CancellationToken ct)
     {
         var user = new User
         {
@@ -36,12 +37,19 @@ public class RegisterHandler : ICommandHandler<RegisterCommand, string>
         if (!result.Succeeded)
             throw new ApplicationException(string.Join("; ", result.Errors.Select(e => e.Description)));
 
-        // Generate JWT
-        return _tokenService.GenerateToken(user);
+        // Create token
+        var token = _tokenService.GenerateToken(user);
+
+        // Return DTO
+        return new UserDto
+        {
+            Token = token,
+            UserName = user.UserName,
+            Id = user.Id
+        };
     }
 }
-
-public class RegisterCommand :ICommand <string>
+public class RegisterCommand :ICommand <UserDto>
 {
     public RegisterRequest Request { get; set; }
 }   
