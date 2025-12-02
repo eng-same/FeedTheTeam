@@ -1,3 +1,5 @@
+using DotNetEnv;
+using Feed.API.Helpers;
 using Feed.Application.Commands.Pool;
 using Feed.Application.Interfaces;
 using Feed.Application.Services;
@@ -8,7 +10,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -126,5 +127,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseCors("AllowFrontend");
+
+
+MigrationHelper.ApplyMigrations(app);
 
 app.Run();
