@@ -7,8 +7,10 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Feed.PL/Feed.PL.csproj", "Feed.PL/"]
-RUN dotnet restore "./Feed.PL/Feed.PL.csproj"
+COPY ["Feed.PL/Feed.API.csproj", "Feed.API/"]
+COPY ["Feed.BLL/Feed.Aplication.csproj", "Feed.Aplication/"]
+COPY ["Feed.DAL/Feed.Domain.csproj", "Feed.Domain/"]
+RUN dotnet restore "./Feed.API/Feed.API.csproj"
 COPY . .
 WORKDIR "/src/Feed.PL"
 RUN dotnet build "./Feed.PL.csproj" -c $BUILD_CONFIGURATION -o /app/build
@@ -20,8 +22,6 @@ RUN dotnet publish "./Feed.PL.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p
 
 # Final stage
 FROM base AS final
-ENV ASPNETCORE_HTTP_POSRTS=80
-EXPOSE 80
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Feed.PL.dll"]

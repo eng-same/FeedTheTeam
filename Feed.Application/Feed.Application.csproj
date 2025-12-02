@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Feed.DAL\Feed.Domain.csproj" />
+    <ProjectReference Include="..\Feed.Domain\Feed.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

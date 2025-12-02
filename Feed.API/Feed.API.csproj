@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Feed.BLL\Feed.Application.csproj" />
+    <ProjectReference Include="..\Feed.Application\Feed.Application.csproj" />
   </ItemGroup>
 
 </Project>
