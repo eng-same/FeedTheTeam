@@ -1,4 +1,4 @@
-# Base runtime image
+﻿# Base runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
@@ -7,21 +7,27 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Feed.PL/Feed.API.csproj", "Feed.API/"]
-COPY ["Feed.BLL/Feed.Aplication.csproj", "Feed.Aplication/"]
-COPY ["Feed.DAL/Feed.Domain.csproj", "Feed.Domain/"]
-RUN dotnet restore "./Feed.API/Feed.API.csproj"
+
+# Copy project files (Dockerfile is inside Feed.API → so use ..)
+COPY ["Feed.API/Feed.API.csproj", "Feed.API/"]
+COPY ["Feed.Application/Feed.Application.csproj", "Feed.Application/"]
+COPY ["Feed.Domain/Feed.Domain.csproj", "Feed.Domain/"]
+
+RUN dotnet restore "Feed.API/Feed.API.csproj"
+
+# Copy the rest of the code
 COPY . .
-WORKDIR "/src/Feed.PL"
-RUN dotnet build "./Feed.PL.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+WORKDIR "/src/Feed.API"
+RUN dotnet build "Feed.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Feed.PL.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Feed.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Final stage
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Feed.PL.dll"]
+ENTRYPOINT ["dotnet", "Feed.API.dll"]
