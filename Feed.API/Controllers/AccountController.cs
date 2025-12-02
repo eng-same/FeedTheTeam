@@ -27,9 +27,9 @@ public class AccountController : ControllerBase
 
             return Ok(userDto);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return StatusCode(500, new { Message = "An error occurred while processing your request." });
+            return StatusCode(500, ex.Message);
         }
     }
     [HttpPost("login")]
@@ -45,9 +45,9 @@ public class AccountController : ControllerBase
         {
             return BadRequest(new { Message = "Invalid credentials" });
         }
-        catch
+        catch (Exception ex)
         {
-            return StatusCode(500, new { Message = "An error occurred while processing your request." });
+            return StatusCode(500, ex.Message);
         }
     }
 
