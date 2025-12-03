@@ -1,7 +1,8 @@
 # Base runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 80
+# ASP.NET Core in containers defaults to port 8080
+EXPOSE 8080
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
